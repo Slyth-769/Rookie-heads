@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disaster Management Alert System (DMAS)</title>
+  
+  <!-- Leaflet CSS for Geospatial Geofencing -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <h1>Rookies • Disaster Alert System</h1>
+          <p>Multi-Channel • Multilingual • No-Network Resilient</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" onclick="switchMainView('citizenView', this)">
+          📱 Citizen Mobile App
+        </button>
+        <button class="nav-tab-btn" onclick="switchMainView('adminView', this)">
+          🛡️ Authority Command Center
+        </button>
+        <button class="nav-tab-btn tab-distress" onclick="switchMainView('distressView', this)">
+          🆘 SOS & Unresponsive (<span id="countUnresponsiveBadge" style="font-weight:800;">0</span>)
+        </button>
+        <button class="nav-tab-btn" onclick="switchMainView('telecomView', this)">
+          📡 Telecom & Gateway Simulator
+        </button>
+        <button class="nav-tab-btn" onclick="switchMainView('directoryView', this)">
+          👥 Citizen Directory
+        </button>
+      </nav>
+
+      <!-- System Live Status -->
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <div class="nav-status">
+          <div class="pulse-dot"></div>
+          <span style="color:var(--c-silver-slate); font-size:0.8rem; font-weight:600;">Disaster Radar Active</span>
+        </div>
+        <a href="/download/zip" download="rookies-disaster-alert-system.zip" class="btn btn-sm btn-blue" style="text-decoration:none; display:flex; align-items:center; gap:0.4rem; font-weight:700; white-space:nowrap;" title="Download complete project ZIP archive">
+          ⬇️ Download ZIP
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Area -->
+  <main>
+    <!-- ========================================== -->
+    <!-- VIEW 1: CITIZEN MOBILE APP                 -->
+    <!-- ========================================== -->
+    <section id="citizenView" class="view-section active">
+      <div class="card" style="margin-bottom: 1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h2 style="font-size:1.1rem; font-weight:700; color:var(--c-pearl-lavender);">
+              📱 Citizen Mobile Experience (PWA / Low-Bandwidth Mode)
+            </h2>
+            <p style="color:var(--c-silver-slate); font-size:0.8rem;">
+              Simulates receiving life-saving alerts, audio sirens, acoustic rescue beacons, and zero-data 2G GSM safe confirmations.
+            </p>
+          </div>
+
+          <!-- Controls for simulation -->
+          <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+            <div>
+              <label class="form-label" style="margin-bottom:0.2rem;">Simulate Citizen Profile:</label>
+              <select id="citizenProfileSelect" class="form-select" style="min-width:240px; padding:0.4rem 0.6rem;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <!-- Prominent No-Network Area Simulator Switch -->
+            <div style="display:flex; align-items:center; gap:0.6rem; background:#2c273e; padding:0.5rem 0.9rem; border-radius:10px; border:1px solid var(--border-color); margin-top:1rem;">
+              <input type="checkbox" id="offlineSimToggle" style="cursor:pointer; width:16px; height:16px; accent-color:#fbbf24;" />
+              <label for="offlineSimToggle" style="font-size:0.82rem; font-weight:700; cursor:pointer; color:#fde68a;">
+                📶 Simulate "Under No-Network Area" (Zero Data)
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone Mockup Container -->
+      <div class="phone-wrapper">
+        <div class="phone-mockup">
+          <div class="phone-notch">
+            <div class="phone-speaker"></div>
+            <div class="phone-camera"></div>
+          </div>
+
+          <div class="phone-screen">
+            <!-- Offline Ribbon: Visible under No Network Area -->
+            <div id="mobileOfflineBanner" class="offline-ribbon-bar" style="display:none;">
+              <span>📡 ZERO-BANDWIDTH MODE • NO DATA</span>
+              <span class="offline-badge-pill">OFFLINE MESH ACTIVE</span>
+            </div>
+
+            <!-- Phone Top Status Bar -->
+            <div class="phone-status-bar">
+              <span id="mobileCarrierName">BSNL / Jio 4G</span>
+              <span id="mobileClockDisplay">18:35</span>
+              <span>🔋 94%</span>
+            </div>
+
+            <!-- Mobile App Appbar -->
+            <div style="padding:0.75rem 1rem; background:#29253b; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:0.7rem; color:var(--c-silver-slate); text-transform:uppercase; font-weight:700; letter-spacing:0.04em;">
+                  Disaster Alert Portal
+                </div>
+                <div id="phoneCitizenName" style="font-weight:800; font-size:0.95rem; color:var(--c-pearl-lavender);">
+                  Ramesh Mohanty
+                </div>
+                <div id="phoneCitizenLoc" style="font-size:0.7rem; color:#93c5fd;">
+                  Swargadwar, Puri
+                </div>
+              </div>
+
+              <!-- Language Selector inside App -->
+              <div style="display:flex; align-items:center; gap:0.3rem;">
+                <select id="mobileLangSelect" class="form-select" style="padding:0.25rem 0.4rem; font-size:0.75rem; width:auto; background:#3a3550; border-color:var(--border-color);">
+                  <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                  <option value="hi">हिन्दी (Hindi)</option>
+                  <option value="en">English</option>
+                  <option value="bn">বাংলা (Bengali)</option>
+                  <option value="te">తెలుగు (Telugu)</option>
+                  <option value="ta">தமிழ் (Tamil)</option>
+                  <option value="ur">اردو (Urdu)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Phone Content Area -->
+            <div style="flex:1; padding:0.75rem; overflow-y:auto;">
+              <!-- Peaceful State (No Active Alerts) -->
+              <div id="phoneNoAlertBox" style="text-align:center; padding:2.5rem 1rem;">
+                <div style="font-size:3.2rem; margin-bottom:0.75rem;">🌤️</div>
+                <h3 style="font-size:1.1rem; font-weight:700; color:#34d399; margin-bottom:0.4rem;">No Active Warnings</h3>
+                <p style="font-size:0.8rem; color:var(--c-silver-slate); line-height:1.45;">
+                  Your area is currently safe. You will receive immediate loud alerts across Push, SMS, and IVR voice calls during any natural disaster.
+                </p>
+                <div style="margin-top:1.5rem; background:#29253b; padding:0.75rem; border-radius:10px; font-size:0.75rem; text-align:left; border:1px solid var(--border-color);">
+                  <div style="font-weight:600; color:var(--c-silver-slate); margin-bottom:0.2rem;">Registered Emergency Phone:</div>
+                  <div id="phoneCitizenNumber" style="font-family:monospace; color:#38bdf8; font-weight:700;">+919437012345</div>
+                </div>
+              </div>
+
+              <!-- Active Emergency Alert Box -->
+              <div id="phoneAlertContainer" style="display:none;">
+                <div class="alert-banner-emergency">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <span id="alertHazardIcon" style="font-size:2rem;">🌀</span>
+                      <div>
+                        <div id="alertHazardName" style="font-size:1rem; font-weight:800; color:#ffffff;">Cyclone Warning</div>
+                        <span id="alertSeverityBadge" class="badge badge-extreme">SEVERE WARNING</span>
+                      </div>
+                    </div>
+
+                    <!-- Audio Siren Button -->
+                    <button id="toggleSirenBtn" class="alert-siren-btn">
+                      🔔 Test Siren
+                    </button>
+                  </div>
+
+                  <!-- Delivery channel badge & status -->
+                  <div id="mobileDeliveryStatus" style="margin-top:0.75rem; font-size:0.75rem;">
+                    <!-- Channel & status updated dynamically -->
+                  </div>
+
+                  <!-- Alert Content -->
+                  <div style="margin-top:0.85rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.2);">
+                    <h4 id="alertHeadline" style="font-size:0.95rem; font-weight:700; color:#fef08a; margin-bottom:0.4rem;">
+                      Severe Cyclonic Storm Alert
+                    </h4>
+                    <p id="alertRecommendedAction" style="font-size:0.82rem; color:#f8fafc; line-height:1.45; background:rgba(0,0,0,0.35); padding:0.6rem; border-radius:8px;">
+                      Evacuate to designated concrete cyclone shelter immediately.
+                    </p>
+                  </div>
+
+                  <!-- Info Rows -->
+                  <div style="margin-top:0.75rem; display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.75rem;">
+                    <div style="background:rgba(0,0,0,0.3); padding:0.45rem 0.6rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+                      <div style="color:var(--c-silver-slate); font-size:0.65rem;">DISTANCE TO EPICENTER</div>
+                      <strong id="alertDistance" style="color:#38bdf8;">12.4 km</strong>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.3); padding:0.45rem 0.6rem; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+                      <div style="color:var(--c-silver-slate); font-size:0.65rem;">EMERGENCY HELPLINE</div>
+                      <strong id="alertHelplines" style="color:#f87171;">112, 1070</strong>
+                    </div>
+                  </div>
+
+                  <!-- Short SMS Safe Preview Box -->
+                  <div style="margin-top:0.75rem; background:rgba(0,0,0,0.45); padding:0.5rem; border-radius:6px; font-size:0.7rem; border:1px dashed var(--c-silver-slate);">
+                    <div style="color:var(--c-silver-slate); font-size:0.65rem; margin-bottom:0.2rem;">SMS-SAFE COMPRESSED TEXT (&lt;160 Chars):</div>
+                    <div id="alertSmsText" style="font-family:monospace; color:#a7f3d0;">...</div>
+                  </div>
+
+                  <!-- Big Action Buttons -->
+                  <div id="phoneAckButtonGroup" style="margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+                    <button class="btn btn-success" style="padding:0.75rem; font-size:0.95rem; font-weight:800; border-radius:10px;" onclick="CitizenApp.acknowledge('SAFE')">
+                      ✓ I AM SAFE / ମୁଁ ସୁରକ୍ଷିତ
+                    </button>
+                    <button class="btn btn-danger" style="padding:0.6rem; font-size:0.85rem; font-weight:700; border-radius:10px;" onclick="CitizenApp.acknowledge('RESCUE')">
+                      🆘 NEED RESCUE / ସାହାଯ୍ୟ ଦରକାର
+                    </button>
+
+                    <!-- Instant 2G SMS trigger link -->
+                    <a href="sms:112?body=SAFE" class="btn btn-secondary btn-sm" style="font-size:0.75rem; margin-top:0.25rem;">
+                      💬 Send 2G SMS "SAFE" to 112 (Zero Data)
+                    </a>
+                  </div>
+
+                  <!-- Acknowledged Confirmation Box -->
+                  <div id="phoneAckConfirmedBox" style="display:none; margin-top:1rem; background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; padding:0.75rem; border-radius:8px; font-size:0.8rem; color:#a7f3d0; text-align:center;">
+                    ✓ Safety Confirmation Recorded
+                  </div>
+                </div>
+
+                <!-- ==================================================== -->
+                <!-- SPECIAL "UNDER NO-NETWORK AREA" DISASTER TOOLKIT     -->
+                <!-- ==================================================== -->
+                <div id="noNetworkDeck" class="no-network-toolkit-card" style="display:none;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                    <h4 style="margin:0;"><span style="color:#fbbf24;">⚡</span> No-Network Survival Deck</h4>
+                    <span style="font-size:0.68rem; color:var(--c-silver-slate); background:rgba(0,0,0,0.3); padding:0.15rem 0.45rem; border-radius:4px; font-weight:600;">Zero-Data Zone</span>
+                  </div>
+
+                  <!-- Device Geolocation Lock (Cached Offline) -->
+                  <div style="background:rgba(0,0,0,0.3); padding:0.5rem; border-radius:8px; font-size:0.72rem; margin-bottom:0.6rem; border:1px solid var(--border-subtle);">
+                    <div style="color:var(--c-silver-slate); font-size:0.65rem; display:flex; justify-content:space-between;">
+                      <span>OFFLINE GPS SATELLITE LOCK:</span>
+                      <span style="color:#34d399; font-weight:700;">● Stamped Locally</span>
+                    </div>
+                    <div id="offlineGpsCoordinates" style="font-family:monospace; color:var(--c-pearl-lavender); font-weight:700; margin-top:0.2rem;">
+                      Lat: 19.7983° N, Lng: 85.8249° E (Puri Sector)
+                    </div>
+                  </div>
+
+                  <!-- Action Grid: Acoustic Whistle, Screen Flash Strobe, 2G SMS, USSD -->
+                  <div class="no-network-action-grid">
+                    <button type="button" id="toggleAcousticWhistleBtn" class="offline-tool-btn" onclick="CitizenApp.toggleAcousticWhistle()">
+                      <span class="icon">🔊</span>
+                      <span>Acoustic Whistle</span>
+                      <small style="font-size:0.62rem; color:var(--c-silver-slate);">For Debris Rescue</small>
+                    </button>
+
+                    <button type="button" id="toggleScreenStrobeBtn" class="offline-tool-btn" onclick="CitizenApp.toggleScreenStrobe()">
+                      <span class="icon">🔦</span>
+                      <span>Visual Strobe</span>
+                      <small style="font-size:0.62rem; color:var(--c-silver-slate);">Night Search Beacon</small>
+                    </button>
+
+                    <a id="offlineSmsActionLink" href="sms:112?body=SAFE" class="offline-tool-btn">
+                      <span class="icon">💬</span>
+                      <span>2G GSM SMS</span>
+                      <small style="font-size:0.62rem; color:var(--c-silver-slate);">Works on 0% Data</small>
+                    </a>
+
+                    <a href="tel:*112*1%23" class="offline-tool-btn">
+                      <span class="icon">📶</span>
+                      <span>USSD Fast Dial</span>
+                      <small style="font-size:0.62rem; color:var(--c-silver-slate);">Dial *112*1#</small>
+                    </a>
+                  </div>
+
+                  <!-- Offline Pre-Cached Guidelines Accordion -->
+                  <div style="margin-top:0.6rem; background:rgba(0,0,0,0.25); border-radius:8px; padding:0.5rem; font-size:0.72rem; border:1px solid var(--border-subtle);">
+                    <details>
+                      <summary style="cursor:pointer; font-weight:700; color:var(--c-pearl-lavender); outline:none;">
+                        📖 Offline Emergency Survival Steps (Cached)
+                      </summary>
+                      <div id="offlineSurvivalTips" style="margin-top:0.4rem; color:var(--c-silver-slate); line-height:1.45; font-size:0.7rem;">
+                        • Disconnect main electrical breaker & LPG gas valve.<br/>
+                        • Store 3 liters boiled drinking water per person.<br/>
+                        • Stay in interior concrete room away from glass windows.<br/>
+                        • In flooding: Do NOT wade into moving water; move to roof.
+                      </div>
+                    </details>
+                  </div>
+
+                  <!-- Offline Safety Queue Receipt Box -->
+                  <div id="offlineQueueCard" style="display:none; margin-top:0.6rem; background:rgba(52, 211, 153, 0.12); border:1px solid rgba(52, 211, 153, 0.4); padding:0.5rem; border-radius:8px; font-size:0.7rem; color:#d1fae5;">
+                    <div style="font-weight:700; display:flex; justify-content:space-between;">
+                      <span>✓ OFFLINE RECEIPT GENERATED</span>
+                      <span id="offlineReceiptHash">#ACK-OFFLINE-7812</span>
+                    </div>
+                    <p style="margin-top:0.25rem; font-size:0.68rem; color:#a7f3d0; line-height:1.4;">
+                      Your acknowledgment is stored in device local flash storage. It will auto-transmit to Disaster Ops the moment cellular/mesh connectivity returns.
+                    </p>
+                    <button type="button" class="btn btn-sm btn-secondary" style="margin-top:0.35rem; font-size:0.65rem; padding:0.25rem 0.5rem;" onclick="CitizenApp.flushOfflineQueue()">
+                      🔄 Force Sync When Back Online
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Phone Bottom Bar -->
+            <div style="padding:0.5rem; background:#29253b; border-top:1px solid var(--border-color); text-align:center; font-size:0.7rem; color:var(--c-silver-slate);">
+              National Disaster Management Authority • State EOC
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: AUTHORITY COMMAND CENTER           -->
+    <!-- ========================================== -->
+    <section id="adminView" class="view-section">
+      <!-- Top KPIs -->
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="kpi-card">
+          <div>
+            <div class="kpi-value" id="kpiTotalTargeted">0</div>
+            <div class="kpi-label">Citizens Targeted</div>
+          </div>
+          <div class="kpi-icon">🎯</div>
+        </div>
+        <div class="kpi-card">
+          <div>
+            <div class="kpi-value" id="kpiAcknowledged" style="color:#34d399;">0 (0%)</div>
+            <div class="kpi-label">Safe Acknowledged</div>
+          </div>
+          <div class="kpi-icon">✅</div>
+        </div>
+        <div class="kpi-card">
+          <div>
+            <div class="kpi-value" id="kpiRescue" style="color:#ef4444;">0</div>
+            <div class="kpi-label">SOS Rescue Needed</div>
+          </div>
+          <div class="kpi-icon">🆘</div>
+        </div>
+        <div class="kpi-card">
+          <div>
+            <div class="kpi-value" id="kpiEscalated" style="color:#fbbf24;">0</div>
+            <div class="kpi-label">Warden Escalated</div>
+          </div>
+          <div class="kpi-icon">🚨</div>
+        </div>
+      </div>
+
+      <!-- Main Layout: 2 Columns -->
+      <div class="grid-2">
+        <!-- Column 1: Alert Composition Wizard -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📝 Issue Disaster Alert (Multilingual Wizard)</h2>
+            <span class="badge badge-warning">Pre-Verified Templates</span>
+          </div>
+
+          <form id="composeAlertForm">
+            <div class="grid-2" style="margin-bottom:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Hazard Type:</label>
+                <select id="hazardTypeSelect" class="form-select">
+                  <option value="Cyclone">🌀 Cyclone (ବାତ୍ୟା)</option>
+                  <option value="Flood">🌊 Flood (ବନ୍ୟା)</option>
+                  <option value="Earthquake">🏚️ Earthquake (ଭୂକମ୍ପ)</option>
+                  <option value="Heatwave">☀️ Severe Heatwave (ଗ୍ରୀଷ୍ମ ପ୍ରବାହ)</option>
+                  <option value="Landslide">⛰️ Landslide (ଭୂସ୍ଖଳନ)</option>
+                  <option value="Tsunami">🌊 Major Tsunami (ସୁନାମୀ)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Urgency / Severity Level:</label>
+                <select id="severitySelect" class="form-select">
+                  <option value="Warning" selected>Warning (Orange - Action Required)</option>
+                  <option value="Severe">Severe (Red - High Danger)</option>
+                  <option value="Extreme">Extreme (Maroon - Immediate Threat to Life)</option>
+                  <option value="Watch">Watch (Yellow - Preparation)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Quick pick district or map center -->
+            <div class="grid-2" style="margin-bottom:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Quick Pick Coastal District:</label>
+                <select id="quickDistrictSelect" class="form-select">
+                  <!-- Populated from districts API -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Affected Area Label:</label>
+                <input type="text" id="areaNameInput" class="form-control" value="Puri Coastal Sector" />
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Epicenter Latitude:</label>
+                <input type="number" step="0.0001" id="centerLatInput" class="form-control" value="19.8135" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Epicenter Longitude:</label>
+                <input type="number" step="0.0001" id="centerLngInput" class="form-control" value="85.8312" />
+              </div>
+            </div>
+
+            <!-- Radius slider -->
+            <div class="form-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                <label class="form-label" style="margin-bottom:0;">Alert Radius (Geofence):</label>
+                <span id="radiusValueDisplay" style="color:#38bdf8; font-weight:700; font-size:0.85rem;">35 km</span>
+              </div>
+              <input type="range" id="radiusKmInput" min="5" max="100" value="35" style="width:100%; cursor:pointer; accent-color:var(--c-mid-slate);" />
+              <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--c-silver-slate); margin-top:0.2rem;">
+                <span>5 km</span>
+                <span id="targetAudienceCount" style="color:#34d399; font-weight:700;">Calculating audience...</span>
+                <span>100 km</span>
+              </div>
+            </div>
+
+            <!-- Escalation & Helpline Config -->
+            <div class="grid-2" style="margin-bottom:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Ack Escalation Timeout:</label>
+                <select id="ackTimeoutInput" class="form-select">
+                  <option value="15">15 Seconds (Rapid Test)</option>
+                  <option value="30" selected>30 Seconds (Interactive Demo)</option>
+                  <option value="60">1 Minute</option>
+                  <option value="300">5 Minutes (Production Standard)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Emergency Helplines:</label>
+                <input type="text" id="helplineInput" class="form-control" value="112, 1070 (State EOC), 1077 (District)" />
+              </div>
+            </div>
+
+            <!-- Multilingual Preview Accordion -->
+            <div style="margin-top:1rem; background:#29253b; padding:0.85rem; border-radius:10px; border:1px solid var(--border-color);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                <span style="font-size:0.8rem; font-weight:700; color:var(--c-pearl-lavender);">Deterministic Translation Preview:</span>
+                <span id="previewSmsCharCount" class="sms-char-counter">...</span>
+              </div>
+
+              <div class="lang-preview-tabs">
+                <button type="button" class="lang-tab active" data-lang="or">ଓଡ଼ିଆ (Odia)</button>
+                <button type="button" class="lang-tab" data-lang="hi">हिन्दी (Hindi)</button>
+                <button type="button" class="lang-tab" data-lang="en">English</button>
+                <button type="button" class="lang-tab" data-lang="bn">বাংলা (Bengali)</button>
+                <button type="button" class="lang-tab" data-lang="te">తెలుగు (Telugu)</button>
+                <button type="button" class="lang-tab" data-lang="ta">தமிழ் (Tamil)</button>
+                <button type="button" class="lang-tab" data-lang="ur">اردو (Urdu)</button>
+              </div>
+
+              <div>
+                <div style="font-size:0.7rem; color:var(--c-silver-slate);">HEADLINE:</div>
+                <div id="previewHeadline" style="font-weight:700; color:var(--c-pearl-lavender); font-size:0.9rem; margin-bottom:0.4rem;">...</div>
+
+                <div style="font-size:0.7rem; color:var(--c-silver-slate);">RECOMMENDED ACTION:</div>
+                <div id="previewAction" style="font-size:0.8rem; color:var(--c-pearl-lavender); margin-bottom:0.4rem;">...</div>
+
+                <div style="font-size:0.7rem; color:var(--c-silver-slate);">SHORT SMS (UNDER 160 CHARS):</div>
+                <div id="previewSms" style="font-size:0.75rem; font-family:monospace; color:#34d399; background:rgba(0,0,0,0.35); padding:0.45rem; border-radius:6px;">...</div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-danger" style="width:100%; margin-top:1.25rem; padding:0.75rem; font-size:1rem; font-weight:800;">
+              🚨 Broadcast Multilingual Emergency Alert
+            </button>
+          </form>
+        </div>
+
+        <!-- Column 2: Geospatial Map -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🗺️ Geofence & Citizen Blast Radius Map</h2>
+            <div style="font-size:0.75rem; color:var(--c-silver-slate);">
+              <span style="color:#34d399;">● Safe</span> |
+              <span style="color:#60a5fa;">● Push</span> |
+              <span style="color:#c084fc;">● SMS</span> |
+              <span style="color:#fcd34d;">● IVR</span> |
+              <span style="color:#ef4444;">● Warden</span>
+            </div>
+          </div>
+
+          <div id="alertMap"></div>
+          <p style="font-size:0.75rem; color:var(--c-silver-slate); margin-top:0.5rem;">
+            Click anywhere on the map or drag the epicenter marker to re-target the geofence perimeter. Citizen pins dynamically update color based on their delivery and acknowledgment state.
+          </p>
+
+          <!-- Channel Stats breakdown -->
+          <div class="grid-4" style="margin-top:1rem;">
+            <div style="background:#29253b; padding:0.6rem; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+              <span class="badge badge-push">Push</span>
+              <div id="countPush" style="font-size:1.25rem; font-weight:800; margin-top:0.25rem; color:var(--c-pearl-lavender);">0</div>
+            </div>
+            <div style="background:#29253b; padding:0.6rem; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+              <span class="badge badge-sms">SMS</span>
+              <div id="countSms" style="font-size:1.25rem; font-weight:800; margin-top:0.25rem; color:var(--c-pearl-lavender);">0</div>
+            </div>
+            <div style="background:#29253b; padding:0.6rem; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+              <span class="badge badge-ivr">IVR Voice</span>
+              <div id="countIvr" style="font-size:1.25rem; font-weight:800; margin-top:0.25rem; color:var(--c-pearl-lavender);">0</div>
+            </div>
+            <div style="background:#29253b; padding:0.6rem; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+              <span class="badge badge-warden">Warden Dispatched</span>
+              <div id="countWarden" style="font-size:1.25rem; font-weight:800; margin-top:0.25rem; color:#fca5a5;">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Delivery Tracking Funnel & Per-Citizen Audit Table -->
+      <div class="card" style="margin-top:1.5rem;">
+        <div class="card-header">
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <h2 class="card-title">📡 Real-Time Delivery & Acknowledgment Audit Trail</h2>
+            <select id="activeAlertSelect" class="form-select" style="width:auto; font-size:0.8rem; padding:0.3rem 0.6rem;">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <span style="font-size:0.75rem; color:var(--c-silver-slate);">Auto-refreshing every 2.5s</span>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Citizen Details</th>
+                <th>Location</th>
+                <th>Current Channel</th>
+                <th>Delivery Status</th>
+                <th>Retries / Escalation</th>
+                <th>Manual Override Actions</th>
+              </tr>
+            </thead>
+            <tbody id="trackingTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW: SOS & UNRESPONSIVE BOARD (SAVED CONTACT KIN CALLS) -->
+    <!-- ======================================================== -->
+    <section id="distressView" class="view-section">
+      <!-- Top KPIs -->
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="kpi-card" style="border-left: 4px solid #ef4444;">
+          <div>
+            <div class="kpi-value" id="kpiTotalDistressCount" style="color:#ef4444;">0</div>
+            <div class="kpi-label">Total In Immediate Danger</div>
+          </div>
+          <div class="kpi-icon">🚨</div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 4px solid var(--c-blue-electric);">
+          <div>
+            <div class="kpi-value" id="kpiKinCallsCount" style="color:var(--c-blue-electric);">0</div>
+            <div class="kpi-label">Saved Contact Calls Dispatched</div>
+          </div>
+          <div class="kpi-icon">📞</div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
+          <div>
+            <div class="kpi-value" id="countSosBadge" style="color:#f59e0b;">0</div>
+            <div class="kpi-label">Active SOS Rescue Requests</div>
+          </div>
+          <div class="kpi-icon">🆘</div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 4px solid var(--c-green-emerald);">
+          <div>
+            <div class="kpi-value" style="color:var(--c-green-emerald);">30s</div>
+            <div class="kpi-label">Emergency Ack Timeline Window</div>
+          </div>
+          <div class="kpi-icon">⏱️</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Left Deck: Unresponsive Citizens (>30s) -->
+        <div class="card" style="border-top: 3px solid #ef4444;">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">⚠️ Unresponsive Citizens (>30s Timeline)</h2>
+              <p style="font-size:0.75rem; color:var(--c-mint-sage); margin-top:0.2rem;">
+                Citizens in danger who have NOT acknowledged alerts within 30 seconds. Automated emergency calls have been dispatched to their saved contacts.
+              </p>
+            </div>
+            <span class="badge badge-extreme">Overdue</span>
+          </div>
+
+          <div id="unresponsiveCardsContainer" style="max-height: 600px; overflow-y: auto; padding-right: 0.3rem;">
+            <!-- Populated dynamically by DistressHub -->
+          </div>
+        </div>
+
+        <!-- Right Deck: Active SOS Rescue Requests -->
+        <div class="card" style="border-top: 3px solid #f59e0b;">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">🆘 Active SOS Rescue Requesters</h2>
+              <p style="font-size:0.75rem; color:var(--c-mint-sage); margin-top:0.2rem;">
+                Citizens who explicitly tapped "NEED RESCUE" or replied "2" via SMS. Requires physical evacuation dispatch.
+              </p>
+            </div>
+            <span class="badge badge-rescue">Immediate Rescue</span>
+          </div>
+
+          <div id="rescueCardsContainer" style="max-height: 600px; overflow-y: auto; padding-right: 0.3rem;">
+            <!-- Populated dynamically by DistressHub -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: TELECOM & GATEWAY SIMULATOR        -->
+    <!-- ========================================== -->
+    <section id="telecomView" class="view-section">
+      <div class="card" style="margin-bottom:1rem;">
+        <h2 style="font-size:1.1rem; font-weight:700; margin-bottom:0.25rem; color:var(--c-pearl-lavender);">
+          Telecom Gateway & 2G GSM Fallback Simulator
+        </h2>
+        <p style="color:var(--c-silver-slate); font-size:0.8rem;">
+          Allows testing SMS two-way replies, USSD cellular codes (*112*1#), and automated IVR voice calls without physical telecom hardware.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <!-- Box 1: SMS Reply Simulator -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">💬 Inbound SMS Simulator</h3>
+            <span class="badge badge-sms">Feature Phone</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--c-silver-slate); margin-bottom:0.75rem;">
+            Simulate a citizen on a basic phone texting their acknowledgment back to shortcode 112.
+          </p>
+
+          <form id="simulateSmsForm">
+            <div class="form-group">
+              <label class="form-label">Citizen Phone:</label>
+              <select id="simSmsPhoneSelect" class="form-select"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">SMS Reply Text:</label>
+              <input type="text" id="simSmsBodyInput" class="form-control" value="1" placeholder="1 (Safe) or 2 (Rescue)" />
+            </div>
+
+            <div style="display:flex; gap:0.4rem; margin-bottom:0.75rem;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="TelecomSimulator.sendSimulatedSms('1')">Reply "1" (Safe)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="TelecomSimulator.sendSimulatedSms('2')">Reply "2" (Rescue)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="TelecomSimulator.sendSimulatedSms('SAFE')">"SAFE"</button>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;">
+              📤 Send Inbound SMS
+            </button>
+          </form>
+        </div>
+
+        <!-- Box 2: USSD Dial Code Simulator -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📶 2G USSD Terminal</h3>
+            <span class="badge badge-warning">Zero Data / 2G</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--c-silver-slate); margin-bottom:0.75rem;">
+            Simulate cellular USSD fast signaling: dial *112*1# for instant network-level safety ack without internet.
+          </p>
+
+          <form id="simulateUssdForm">
+            <div class="form-group">
+              <label class="form-label">Citizen Phone:</label>
+              <select id="simUssdPhoneSelect" class="form-select"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">USSD String:</label>
+              <input type="text" id="simUssdCodeInput" class="form-control" value="*112*1#" />
+            </div>
+
+            <div style="display:flex; gap:0.4rem; margin-bottom:0.75rem;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="TelecomSimulator.dialSimulatedUssd('*112*1#')">*112*1# (Safe)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="TelecomSimulator.dialSimulatedUssd('*112*2#')">*112*2# (SOS)</button>
+            </div>
+
+            <button type="submit" class="btn btn-warning" style="width:100%; color:#181522; font-weight:800;">
+              📞 Dial USSD String
+            </button>
+          </form>
+        </div>
+
+        <!-- Box 3: Automated IVR Voice Call Simulator -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📞 Automated IVR Voice Call</h3>
+            <span class="badge badge-ivr">Voice Fallback</span>
+          </div>
+          <p style="font-size:0.75rem; color:var(--c-silver-slate); margin-bottom:0.75rem;">
+            Test automated voice call escalation with browser SpeechSynthesis reading the alert script in native language.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label">Target Citizen Phone:</label>
+            <select id="simIvrPhoneSelect" class="form-select"></select>
+          </div>
+
+          <button id="simulateIvrCallBtn" class="btn btn-warning" style="width:100%; margin-top:0.75rem; font-weight:800;">
+            🔊 Simulate Incoming IVR Call
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Telecom Gateway Transaction Feed -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-header">
+          <h3 class="card-title">📡 Real-Time Telecom Gateway Audit Stream</h3>
+          <span style="font-size:0.75rem; color:var(--c-silver-slate);">Outbound PUSH/SMS/IVR & Inbound SMS/USSD</span>
+        </div>
+        <div id="telecomEventFeed" style="max-height:300px; overflow-y:auto; background:#201c2c; border-radius:8px; border:1px solid var(--border-color);">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: CITIZEN DIRECTORY & REGISTRATION   -->
+    <!-- ========================================== -->
+    <section id="directoryView" class="view-section">
+      <div class="grid-2">
+        <!-- Left: Citizen List -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">👥 Registered Citizens Directory</h3>
+            <span class="badge badge-push">Coastal Belt Database</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name & Phone</th>
+                  <th>Language</th>
+                  <th>Location</th>
+                  <th>Device</th>
+                  <th>Assigned Warden</th>
+                </tr>
+              </thead>
+              <tbody id="directoryTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Register New Citizen -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">➕ Register Citizen for Disaster Alerts</h3>
+          </div>
+          <form id="registerCitizenForm" onsubmit="handleCitizenRegistration(event)">
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Full Name:</label>
+                <input type="text" id="regName" class="form-control" required placeholder="e.g. Subrat Das" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mobile Phone:</label>
+                <input type="text" id="regPhone" class="form-control" required placeholder="+919861099999" />
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Preferred Language (7 Languages):</label>
+                <select id="regLanguage" class="form-select">
+                  <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                  <option value="hi">हिन्दी (Hindi)</option>
+                  <option value="en">English</option>
+                  <option value="bn">বাংলা (Bengali)</option>
+                  <option value="te">తెలుగు (Telugu)</option>
+                  <option value="ta">தமிழ் (Tamil)</option>
+                  <option value="ur">اردو (Urdu)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Device Type:</label>
+                <select id="regDevice" class="form-select">
+                  <option value="smartphone">Smartphone (Push + SMS + IVR)</option>
+                  <option value="feature_phone">Basic 2G Feature Phone (Direct SMS + IVR)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">District:</label>
+                <select id="regDistrict" class="form-select">
+                  <option value="Puri">Puri</option>
+                  <option value="Balasore">Balasore</option>
+                  <option value="Cuttack">Cuttack</option>
+                  <option value="Bhubaneswar">Bhubaneswar</option>
+                  <option value="Ganjam">Ganjam</option>
+                  <option value="Kendrapara">Kendrapara</option>
+                  <option value="Jagatsinghpur">Jagatsinghpur</option>
+                  <option value="Bhadrak">Bhadrak</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Village / Ward / Street:</label>
+                <input type="text" id="regVillage" class="form-control" placeholder="e.g. Swargadwar Ward 3" required />
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">GPS Latitude:</label>
+                <input type="number" step="0.0001" id="regLat" class="form-control" value="19.8135" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">GPS Longitude:</label>
+                <input type="number" step="0.0001" id="regLng" class="form-control" value="85.8312" />
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Secondary Contact (Next of Kin):</label>
+                <input type="text" id="regSecName" class="form-control" placeholder="Kin Name" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Secondary Kin Phone:</label>
+                <input type="text" id="regSecPhone" class="form-control" placeholder="+91..." />
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem; font-weight:700;">
+              Register Citizen in Disaster Cell
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive IVR Voice Call Modal Simulator -->
+  <div id="ivrCallModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(8px);">
+    <div style="background:var(--c-dark-purple); border:2px solid #f59e0b; border-radius:20px; width:340px; padding:1.5rem; text-align:center; box-shadow:0 0 40px rgba(245,158,11,0.5);">
+      <div style="font-size:2.5rem; margin-bottom:0.5rem; animation:pulse 1s infinite;">📞</div>
+      <h3 id="ivrModalCaller" style="color:#f59e0b; font-size:1rem; font-weight:800;">EMERGENCY IVR (112)</h3>
+      <p id="ivrModalTarget" style="font-size:0.8rem; color:var(--c-silver-slate); margin-bottom:0.75rem;">Calling...</p>
+      
+      <div id="ivrModalStatus" class="badge badge-warning" style="margin-bottom:1rem;">CALL CONNECTED</div>
+
+      <div style="background:#201c2c; padding:0.75rem; border-radius:10px; font-size:0.75rem; color:var(--c-pearl-lavender); font-style:italic; margin-bottom:1.25rem; min-height:60px; display:flex; align-items:center; justify-content:center;" id="ivrSpokenScriptDisplay">
+        "Urgent Disaster Warning..."
+      </div>
+
+      <div style="font-size:0.75rem; color:var(--c-silver-slate); margin-bottom:0.5rem;">KEYPAD (DTMF RESPONSE):</div>
+      <div style="display:flex; justify-content:center; gap:0.75rem; margin-bottom:1.25rem;">
+        <button class="btn btn-success" style="padding:0.6rem 1.2rem; font-size:1rem; font-weight:800;" onclick="TelecomSimulator.respondIvrDtmf('1')">
+          1 [SAFE]
+        </button>
+        <button class="btn btn-danger" style="padding:0.6rem 1.2rem; font-size:1rem; font-weight:800;" onclick="TelecomSimulator.respondIvrDtmf('2')">
+          2 [RESCUE]
+        </button>
+      </div>
+
+      <button class="btn btn-secondary btn-sm" onclick="TelecomSimulator.closeIvrModal()">
+        End Call
+      </button>
+    </div>
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Client Applications -->
+  <script src="/js/citizen.js"></script>
+  <script src="/js/admin.js"></script>
+  <script src="/js/simulator.js"></script>
+  <script src="/js/distress.js"></script>
+
+  <!-- Main View Routing and Initializer -->
+  <script>
+    function switchMainView(viewId, btn) {
+      document.querySelectorAll(".view-section").forEach((sec) => sec.classList.remove("active"));
+      document.querySelectorAll(".nav-tab-btn").forEach((b) => b.classList.remove("active"));
+      
+      const target = document.getElementById(viewId);
+      if (target) target.classList.add("active");
+      if (btn) btn.classList.add("active");
+
+      // Invalidate Leaflet map size when switching to admin tab
+      if (viewId === "adminView" && window.AdminApp && window.AdminApp.map) {
+        setTimeout(() => window.AdminApp.map.invalidateSize(), 200);
+      }
+      if (viewId === "distressView" && window.DistressHub) {
+        window.DistressHub.fetchDistressData();
+      }
+    }
+
+    // Populate directory table
+    async function loadDirectoryTable() {
+      try {
+        const res = await fetch("/api/citizens");
+        const list = await res.json();
+        const tbody = document.getElementById("directoryTableBody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        list.forEach((c) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><strong>${c.name}</strong><br/><small style="color:#38bdf8;">${c.phone}</small></td>
+            <td><span class="badge badge-push">${c.language.toUpperCase()}</span></td>
+            <td>${c.block_village}, ${c.district}</td>
+            <td><span class="badge ${c.device_type === 'smartphone' ? 'badge-safe' : 'badge-warning'}">${c.device_type}</span></td>
+            <td><small>${c.warden_name || 'Civil Defense Warden'}</small></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        console.error("Directory error:", e);
+      }
+    }
+
+    async function handleCitizenRegistration(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById("regName").value,
+        phone: document.getElementById("regPhone").value,
+        language: document.getElementById("regLanguage").value,
+        device_type: document.getElementById("regDevice").value,
+        district: document.getElementById("regDistrict").value,
+        block_village: document.getElementById("regVillage").value,
+        lat: parseFloat(document.getElementById("regLat").value),
+        lng: parseFloat(document.getElementById("regLng").value),
+        secondary_name: document.getElementById("regSecName").value,
+        secondary_phone: document.getElementById("regSecPhone").value
+      };
+
+      try {
+        const res = await fetch("/api/citizens", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === "SUCCESS") {
+          alert("Citizen registered successfully!");
+          document.getElementById("registerCitizenForm").reset();
+          loadDirectoryTable();
+          if (window.CitizenApp) window.CitizenApp.fetchCitizens();
+          if (window.AdminApp) window.AdminApp.loadCitizens();
+          if (window.TelecomSimulator) window.TelecomSimulator.loadCitizensForSelector();
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      } catch (err) {
+        console.error("Registration error:", err);
+      }
+    }
+
+    // Register Service Worker for offline PWA
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js")
+        .then(() => console.log("[PWA] Service Worker registered"))
+        .catch((e) => console.log("[PWA] SW register skipped or not supported:", e));
+    }
+
+    // Initialize all apps on load
+    window.addEventListener("DOMContentLoaded", () => {
+      CitizenApp.init();
+      AdminApp.init();
+      TelecomSimulator.init();
+      if (window.DistressHub) DistressHub.init();
+      loadDirectoryTable();
+    });
+  </script>
+</body>
+</html>
